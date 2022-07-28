@@ -1,0 +1,31 @@
+<div id="map-canvas"></div>
+
+<script>
+$(function(){
+
+    let obj_google_map = new trait_google_map( document.getElementById('map-canvas') );
+
+    obj_google_map.map_coordinates(32.84664681697924, -96.79535833257815);
+    obj_google_map.widget_initialize();
+
+    /**
+     * Search Map By Address
+     * */
+    $(document).on('keyup', 'input[name=name]', function () {
+
+        obj_google_map.widget_coordinates_by_address($(this).val());
+        let map_coordinates = obj_google_map.get_map_coordinates();
+
+        $("#latitude").val(map_coordinates.lat);
+        $("#longitude").val(map_coordinates.lng);
+
+    });
+    /**
+     * Selector Circle By Radius
+     * */
+    $(document).on('keyup', 'input[name=allowed_radius]', function () {
+        obj_google_map.circle_radius( $(this).val() );
+    });
+});
+
+</script>
