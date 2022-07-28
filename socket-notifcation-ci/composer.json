@@ -1,0 +1,6 @@
+{
+    "require": {
+        "kriswallsmith/buzz": "*",
+        "wisembly/elephant.io": "^3.3"
+    }
+}
