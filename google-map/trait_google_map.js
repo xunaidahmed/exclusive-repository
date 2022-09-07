@@ -1,4 +1,4 @@
-var trait_google_map = function( map_convas_id )
+var trait_google_map = function( map_convas_id, latitude_id, longitude_id )
 {
    const METERS_PER_MILE = 1609.34;
 
@@ -13,6 +13,29 @@ var trait_google_map = function( map_convas_id )
        this.circle_radius( mark_circle );
    };
 
+   this.widget_autocomplete = function ( autocomplete_id ) {
+
+       let search_places = new google.maps.places.Autocomplete(autocomplete_id[0], {
+           types: ['geocode']
+       });
+
+       google.maps.event.addListener(search_places, 'place_changed', function () {
+            try
+            {
+                let places = search_places.getPlace();
+
+                if (places.length == 0) {
+                    return;
+                }
+
+                self.widget_coordinates_by_address( places.formatted_address );
+            }
+            catch(e){
+                console.log('widget_autocomplete catch', e)
+            }
+       });
+   },
+
    this.widget_coordinates_by_address = function ( address )
    {
        let geocoder = new google.maps.Geocoder();
@@ -22,9 +45,12 @@ var trait_google_map = function( map_convas_id )
            if (status == google.maps.GeocoderStatus.OK)
            {
                let geometry_coordinates = results[0].geometry.location;
+               let coordinates = { lat: geometry_coordinates.lat(), lng: geometry_coordinates.lng() };
 
-               self.map_coordinates(geometry_coordinates.lat(), geometry_coordinates.lng() );
+               self.map_coordinates(coordinates.lat, coordinates.lng );
                self.widget_initialize();
+               self.map_zoom_in(12);
+               self.map_markar();
            }
        });
    },
@@ -32,6 +58,9 @@ var trait_google_map = function( map_convas_id )
    this.map_coordinates = function(latitude, longitude)
    {
        widget_coordinates = { lat: latitude, lng: longitude };
+
+       latitude_id.val(latitude);
+       longitude_id.val(longitude);
 
        return widget_coordinates;
    },
@@ -52,21 +81,62 @@ var trait_google_map = function( map_convas_id )
 
        map_widget = new google.maps.Map(map_convas_id, map_options);
 
+       map_widget.addListener("click", (e) => {
+           //console.log(e.latLng);
+           let coordinates = e.latLng;
+           this.map_coordinates(coordinates.lat(), coordinates.lng() );
+           this.pin_markar(coordinates);
+       });
+
        return map_widget;
    },
 
-   this.pin_markar = function()
+   this.map_zoom_in = function( zoom_in )
    {
+       let coordinates = self.get_map_coordinates();
+
+       var latlng = new google.maps.LatLng(coordinates.lat, coordinates.lng);
+       map_widget.setCenter(latlng);
+       map_widget.setZoom(zoom_in);
+   },
+
+    this.map_markar = function()
+    {
+        let coordinates = self.get_map_coordinates();
+
+        marker_widget = new google.maps.Marker({
+            position: coordinates,
+            animation: google.maps.Animation.DROP,
+            map: map_widget,
+            draggable: true
+        });
+
+        google.maps.event.addListener(marker_widget, 'dragend', function (event) {
+           self.map_coordinates(this.getPosition().lat(), this.getPosition().lng() );
+       });
+
+        return  marker_widget;
+    },
+
+   this.pin_markar = function(on_coordinates)
+   {
+       let coordinates = self.get_map_coordinates();
+
        if (marker_widget !== undefined)
        {
-           marker_widget.setPosition(widget_coordinates);
+           marker_widget.setPosition(on_coordinates);
        }
        else
        {
            marker_widget = new google.maps.Marker({
-               position: widget_coordinates,
+               position: coordinates,
                animation: google.maps.Animation.DROP,
-               map: map_widget
+               map: map_widget,
+               draggable: true
+           });
+
+           google.maps.event.addListener(marker_widget, 'dragend', function (event) {
+               self.map_coordinates(this.getPosition().lat(), this.getPosition().lng() );
            });
        }
 
