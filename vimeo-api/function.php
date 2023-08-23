@@ -20,7 +20,7 @@ function fromSeconds($seconds)
 
 function getVimeoDuration($vimeo_id)
 {
-    $authorize_access_token = '78fd41a961ef5efe4c201c9e13c266e0';    
+    $authorize_access_token = '78fd41a961ef5efe41c201c9e13c266e0';    
 
     try
     {
